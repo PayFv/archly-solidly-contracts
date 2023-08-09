@@ -16,17 +16,17 @@ contract ve_test {
 
     uint tokenId = 0;
 
-    function create_lock(uint amount, uint duration) external {
-        balances[++tokenId] = amount;
-        ownerOf[tokenId] = msg.sender;
-        totalSupply += amount;
-    }
+    // function create_lock(uint amount, uint duration) external {
+    //     balances[++tokenId] = amount;
+    //     ownerOf[tokenId] = msg.sender;
+    //     totalSupply += amount;
+    // }
 
-    function balanceOfNFT(uint tokenId) external view returns (uint) {
-        return totalSupply;
-    }
+    // function balanceOfNFT(uint tokenId) external view returns (uint) {
+    //     return totalSupply;
+    // }
 
-    function isApprovedOrOwner(address owner, uint _tokenId) external view returns (bool) {
-        return true;
-    }
+    // function isApprovedOrOwner(address owner, uint _tokenId) external view returns (bool) {
+    //     return true;
+    // }
 }
