@@ -23,8 +23,11 @@
     "dotenv": "^16.0.0"
   },
   "scripts": {
+    "test": "npx hardhat test",
     "compile": "npx hardhat compile",
     "a": "npx hardhat run --network base-goerli scripts/test.js",
+    "b": "npx hardhat run --network base-goerli scripts/deploy_base.js",
+    "deploy-tokens-goerli": "npx hardhat run --network base-goerli scripts/deploy_base_tokens.js",
     "deploy-goerli": "npx hardhat run --network base-goerli scripts/deploy-goerli.js",
     "deploy-mainnet": "npx hardhat run --network base-mainnet scripts/deploy-mainnet.js"
   }

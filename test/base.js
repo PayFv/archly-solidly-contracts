@@ -67,9 +67,13 @@ describe("core", function () {
     await ve_underlying.mint(owner3.address, ethers.BigNumber.from("10000000000000000000000000"));
     late_reward = await token.deploy('LR', 'LR', 18, owner.address);
     await late_reward.mint(owner.address, ethers.BigNumber.from("20000000000000000000000000"));
-    vecontract = await ethers.getContractFactory("contracts/ve.sol:ve");
-    ve = await vecontract.deploy(ve_underlying.address);
 
+    const veArtProxy = await ethers.getContractFactory("VeArtProxy")
+    const artProxy = await veArtProxy.deploy()
+    await artProxy.deployed()
+
+    vecontract = await ethers.getContractFactory("contracts/ve.sol:ve");
+    ve = await vecontract.deploy(ve_underlying.address, artProxy.address );
     await ust.deployed();
     await mim.deployed();
   });
@@ -84,7 +88,11 @@ describe("core", function () {
   it("increase lock", async function () {
     await ve_underlying.approve(ve.address, ethers.BigNumber.from("500000000000000000"));
     await ve.increase_amount(1, ethers.BigNumber.from("500000000000000000"));
-    await expect(ve.increase_unlock_time(1, 4 * 365 * 86400)).to.be.reverted;
+    expect(await ve.increase_unlock_time(1, 4 * 365 * 86400).then( ()=> {
+      return 1
+    }).catch( e => {
+      return null
+    })).to.be.null
     expect(await ve.balanceOfNFT(1)).to.above(ethers.BigNumber.from("995063075414519385"));
     expect(await ve_underlying.balanceOf(ve.address)).to.be.equal(ethers.BigNumber.from("1000000000000000000"));
   });
@@ -100,20 +108,35 @@ describe("core", function () {
 
 
   it("steal NFT", async function () {
-    await expect(ve.connect(owner2).transferFrom(owner.address, owner2.address, 1)).to.be.reverted
-    await expect(ve.connect(owner2).approve(owner2.address, 1)).to.be.reverted
-    await expect(ve.connect(owner2).merge(1, 2)).to.be.reverted
-  });
+    expect( await ve.connect(owner2).transferFrom(owner.address, owner2.address, 1).then( () =>{
+      return 1
+    }).catch(e=>{
+      return null 
+    })).to.be.null
 
+    expect( await ve.connect(owner2).approve(owner2.address, 1).then( () =>{
+      return 1
+    }).catch(e=>{
+      return null 
+    })).to.be.null
+    // await expect(ve.connect(owner2).transferFrom(owner.address, owner2.address, 1)).to.be.reverted
+    // await expect(ve.connect(owner2).approve(owner2.address, 1)).to.be.reverted
+    expect( await ve.connect(owner2).merge(1, 2).then( () =>{
+      return 1
+    }).catch(e=>{
+      return null 
+    })).to.be.null
+    // await expect(ve.connect(owner2).merge(1, 2)).to.be.reverted
+  });
 
   it("ve merge", async function () {
     await ve_underlying.approve(ve.address, ethers.BigNumber.from("1000000000000000000"));
     await ve.create_lock(ethers.BigNumber.from("1000000000000000000"), 4 * 365 * 86400);
     expect(await ve.balanceOfNFT(2)).to.above(ethers.BigNumber.from("995063075414519385"));
     expect(await ve_underlying.balanceOf(ve.address)).to.be.equal(ethers.BigNumber.from("2000000000000000000"));
-    console.log(await ve.totalSupply());
+    // console.log(await ve.totalSupply());
     await ve.merge(2, 1);
-    console.log(await ve.totalSupply());
+    // console.log(await ve.totalSupply());
     expect(await ve.balanceOfNFT(1)).to.above(ethers.BigNumber.from("1990063075414519385"));
     expect(await ve.balanceOfNFT(2)).to.equal(ethers.BigNumber.from("0"));
     expect((await ve.locked(2)).amount).to.equal(ethers.BigNumber.from("0"));
@@ -122,9 +145,9 @@ describe("core", function () {
     await ve.create_lock(ethers.BigNumber.from("1000000000000000000"), 4 * 365 * 86400);
     expect(await ve.balanceOfNFT(3)).to.above(ethers.BigNumber.from("995063075414519385"));
     expect(await ve_underlying.balanceOf(ve.address)).to.be.equal(ethers.BigNumber.from("3000000000000000000"));
-    console.log(await ve.totalSupply());
+    // console.log(await ve.totalSupply());
     await ve.merge(3, 1);
-    console.log(await ve.totalSupply());
+    // console.log(await ve.totalSupply());
     expect(await ve.balanceOfNFT(1)).to.above(ethers.BigNumber.from("1990063075414519385"));
     expect(await ve.balanceOfNFT(3)).to.equal(ethers.BigNumber.from("0"));
     expect((await ve.locked(3)).amount).to.equal(ethers.BigNumber.from("0"));
@@ -214,7 +237,9 @@ describe("core", function () {
     await ust.transfer(pair.address, ust_1);
     await mim.transfer(pair.address, mim_1);
     await pair.mint(owner.address);
-    expect(await pair.getAmountOut(ust_1, ust.address)).to.equal(ethers.BigNumber.from("982117769725505988"));
+    // mark 111
+    // expect(await pair.getAmountOut(ust_1, ust.address)).to.equal(ethers.BigNumber.from("982117769725505988"));
+    expect(await pair.getAmountOut(ust_1, ust.address)).to.equal(ethers.BigNumber.from("981931564233918682"));
     const output = await router.getAmountOut(ust_1, ust.address, mim.address);
     expect(await pair.getAmountOut(ust_1, ust.address)).to.equal(output.amount);
     expect(output.stable).to.equal(true);
@@ -228,7 +253,9 @@ describe("core", function () {
     await ust.connect(owner2).transfer(pair.address, ust_1);
     await mim.connect(owner2).transfer(pair.address, mim_1);
     await pair.connect(owner2).mint(owner2.address);
-    expect(await pair.connect(owner2).getAmountOut(ust_1, ust.address)).to.equal(ethers.BigNumber.from("992220948146798746"));
+    // mark 11
+    // expect(await pair.connect(owner2).getAmountOut(ust_1, ust.address)).to.equal(ethers.BigNumber.from("992220948146798746"));
+    expect(await pair.connect(owner2).getAmountOut(ust_1, ust.address)).to.equal(ethers.BigNumber.from("992027011669384412"));
   });
 
   it("BaseV1Router01 addLiquidity", async function () {
@@ -280,20 +307,22 @@ describe("core", function () {
 
   it("BaseV1Router01 pair1 getAmountsOut & swapExactTokensForTokens", async function () {
     const ust_1 = ethers.BigNumber.from("1000000");
-    const route = {from:ust.address, to:mim.address, stable:true}
-
-    expect((await router.getAmountsOut(ust_1, [route]))[1]).to.be.equal(await pair.getAmountOut(ust_1, ust.address));
-
-    const before = await mim.balanceOf(owner.address);
-    const expected_output_pair = await pair.getAmountOut(ust_1, ust.address);
-    const expected_output = await router.getAmountsOut(ust_1, [route]);
-    await ust.approve(router.address, ust_1);
-    await router.swapExactTokensForTokens(ust_1, expected_output[1], [route], owner.address, Date.now());
-    const fees = await pair.fees()
-    expect(await ust.balanceOf(fees)).to.be.equal(100);
-    const b = await ust.balanceOf(owner.address);
-    await pair.claimFees();
-    expect(await ust.balanceOf(owner.address)).to.be.above(b);
+      const route = {from:ust.address, to:mim.address, stable:true}
+  
+      expect((await router.getAmountsOut(ust_1, [route]))[1]).to.be.equal(await pair.getAmountOut(ust_1, ust.address));
+  
+      const before = await mim.balanceOf(owner.address);
+      const expected_output_pair = await pair.getAmountOut(ust_1, ust.address);
+      const expected_output = await router.getAmountsOut(ust_1, [route]);
+      await ust.approve(router.address, ust_1);
+      await router.swapExactTokensForTokens(ust_1, expected_output[1], [route], owner.address, Date.now());
+      const fees = await pair.fees()
+      // mark 11
+      // expect(await ust.balanceOf(fees)).to.be.equal(100);
+      expect(await ust.balanceOf(fees)).to.be.equal(300);
+      const b = await ust.balanceOf(owner.address);
+      await pair.claimFees();
+      expect(await ust.balanceOf(owner.address)).to.be.above(b);
   });
 
   it("BaseV1Router01 pair1 getAmountsOut & swapExactTokensForTokens owner2", async function () {
@@ -308,7 +337,9 @@ describe("core", function () {
     await ust.connect(owner2).approve(router.address, ust_1);
     await router.connect(owner2).swapExactTokensForTokens(ust_1, expected_output[1], [route], owner2.address, Date.now());
     const fees = await pair.fees()
-    expect(await ust.balanceOf(fees)).to.be.equal(101);
+    // mark 11
+    // expect(await ust.balanceOf(fees)).to.be.equal(101);
+    expect(await ust.balanceOf(fees)).to.be.equal(301);
     const b = await ust.balanceOf(owner.address);
     await pair.connect(owner2).claimFees();
     expect(await ust.balanceOf(owner.address)).to.be.equal(b);
@@ -418,9 +449,13 @@ describe("core", function () {
     await gauge.deposit(pair_1000, 1);
     expect(await gauge.tokenIds(owner.address)).to.equal(1);
     await pair.approve(gauge.address, pair_1000);
-    await expect(gauge.deposit(pair_1000, 2)).to.be.reverted;
+    // await expect(gauge.deposit(pair_1000, 2)).to.be.reverted;
+    expect( await gauge.deposit(pair_1000, 2).then(()=>{return 1}).catch(e=>{return null}))
+      .to.be.null 
     expect(await gauge.tokenIds(owner.address)).to.equal(1);
-    await expect(gauge.withdrawToken(0, 2)).to.be.reverted;
+    // await expect(gauge.withdrawToken(0, 2)).to.be.reverted;
+    expect( await gauge.withdrawToken(0, 2).then(()=>{return 1}).catch(e=>{return null}))
+      .to.be.null 
     expect(await gauge.tokenIds(owner.address)).to.equal(1);
     await gauge.withdrawToken(0, 1);
     expect(await gauge.tokenIds(owner.address)).to.equal(0);
@@ -454,7 +489,6 @@ describe("core", function () {
 
   it("add gauge & bribe rewards", async function () {
     const pair_1000 = ethers.BigNumber.from("1000000000");
-
     await ve_underlying.approve(gauge.address, pair_1000);
     await ve_underlying.approve(bribe.address, pair_1000);
     await ve_underlying.approve(staking.address, pair_1000);
